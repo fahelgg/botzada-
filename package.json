@@ -1,0 +1,15 @@
+{
+  "name": "bot-financeiro",
+  "version": "1.0.0",
+  "description": "Bot financeiro inteligente com IA",
+  "main": "src/app.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "node --watch src/app.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "openai": "^5.12.2"
+  }
+}

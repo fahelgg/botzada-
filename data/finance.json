@@ -1,0 +1,35 @@
+{
+  "transactions": [
+    {
+      "id": 1,
+      "type": "entrada",
+      "category": "receita",
+      "description": "entrou 1500 salario",
+      "amount": 1500,
+      "created_at": "2026-04-19T02:21:12.056Z"
+    },
+    {
+      "id": 2,
+      "type": "saida",
+      "category": "gasto",
+      "description": "gastei 200 comida",
+      "amount": 200,
+      "created_at": "2026-04-19T02:21:42.579Z"
+    }
+  ],
+  "goals": [
+    {
+      "id": 1,
+      "name": "notebook",
+      "target_amount": 4500,
+      "current_amount": 0
+    }
+  ],
+  "settings": {
+    "monthly_income_expected": 0,
+    "monthly_safe_spending_limit": 0,
+    "emergency_reserve_target": 0,
+    "minimum_monthly_investment": 0,
+    "impulse_cooldown_hours": 72
+  }
+}

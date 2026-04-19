@@ -1,0 +1,65 @@
+const fs = require("fs");
+const path = require("path");
+const Database = require("better-sqlite3");
+
+// cria pasta /data se não existir
+const dataDir = path.join(__dirname, "..", "data");
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+
+// caminho do banco
+const dbPath = path.join(dataDir, "finance.db");
+
+// conecta/cria banco
+const db = new Database(dbPath);
+
+// melhora performance
+db.pragma("journal_mode = WAL");
+
+// cria tabelas
+db.exec(`
+  CREATE TABLE IF NOT EXISTS transactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    type TEXT NOT NULL,            -- entrada | saida | investimento | resgate
+    category TEXT NOT NULL,
+    description TEXT,
+    amount REAL NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+  );
+
+  CREATE TABLE IF NOT EXISTS goals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    target_amount REAL NOT NULL,
+    current_amount REAL NOT NULL DEFAULT 0,
+    priority INTEGER NOT NULL DEFAULT 1,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+  );
+
+  CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
+`);
+
+// configurações padrão (não sobrescreve se já existir)
+const defaultSettings = [
+  ["monthly_income_expected", "0"],
+  ["monthly_safe_spending_limit", "0"],
+  ["emergency_reserve_target", "0"],
+  ["minimum_monthly_investment", "0"],
+  ["impulse_cooldown_hours", "72"],
+];
+
+const insertSetting = db.prepare(`
+  INSERT OR IGNORE INTO settings (key, value)
+  VALUES (?, ?)
+`);
+
+for (const [key, value] of defaultSettings) {
+  insertSetting.run(key, value);
+}
+
+module.exports = db;
