@@ -1,7 +1,8 @@
-require("dotenv").config();
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 
 module.exports = {
-  openaiApiKey: process.env.OPENAI_API_KEY,
-  openaiModel: process.env.OPENAI_MODEL || "gpt-5.4-mini",
+  groqApiKey: process.env.GROQ_API_KEY,
+  groqModel: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
   currency: process.env.CURRENCY || "BRL",
 };

@@ -1,5 +1,5 @@
-const { addNote, formatNotes } = require("./noteService");
-const readline = require("readline");
+const { Client, LocalAuth } = require("whatsapp-web.js");
+const qrcode = require("qrcode-terminal");
 const { interpretMessage, clearHistory } = require("./ai");
 const { fallbackParse } = require("./parserFallback");
 const {
@@ -16,10 +16,14 @@ const { generatePlan } = require("./planningEngine");
 const { analyzeImpulse } = require("./adviceEngine");
 const { buildPurchaseAdvice, buildGeneralAdvice } = require("./personalityEngine");
 const { updateProfile } = require("./profileService");
+const { addNote, formatNotes } = require("./noteService");
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
+const client = new Client({
+  authStrategy: new LocalAuth(),
+  puppeteer: {
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  },
 });
 
 function buildContext() {
@@ -46,13 +50,11 @@ async function handleMessage(message) {
   const normalizedMessage = originalMessage.toLowerCase();
   const context = buildContext();
 
-  // Limpa histórico de conversa
   if (normalizedMessage === "limpar" || normalizedMessage === "nova conversa") {
     clearHistory();
     return "Conversa reiniciada! Como posso te ajudar?";
   }
 
-  // Ver notas salvas (antes da IA para não processar desnecessariamente)
   if (normalizedMessage === "notas" || normalizedMessage === "minhas notas") {
     return formatNotes();
   }
@@ -175,39 +177,42 @@ async function handleMessage(message) {
   return parsed.reply || "Entendi. Me passe mais detalhes.";
 }
 
-console.log("Bot financeiro iniciado.");
-console.log("─────────────────────────────");
-console.log("Exemplos do que você pode dizer:");
-console.log("  entrou 1500 salario");
-console.log("  gastei 45 internet");
-console.log("  posso comprar um tênis de 320?");
-console.log("  resumo");
-console.log("  perfil monthlyIncome 1500");
-console.log("  plano");
-console.log("  me aconselha");
-console.log("  to impulsivo com 400");
-console.log("  notas / minhas notas");
-console.log("  limpar  (reinicia a conversa)");
-console.log("  sair");
-console.log("─────────────────────────────\n");
+client.on("qr", (qr) => {
+  console.log("\nEscaneia esse QR Code com o WhatsApp:\n");
+  qrcode.generate(qr, { small: true });
+});
 
-function prompt() {
-  rl.question("> ", async (message) => {
-    if (message.trim().toLowerCase() === "sair") {
-      console.log("Até mais!");
-      rl.close();
-      return;
-    }
+client.on("ready", () => {
+  console.log("✅ Bot conectado ao WhatsApp!");
+  console.log("Manda uma mensagem pra você mesmo para começar.\n");
+});
 
-    try {
-      const reply = await handleMessage(message);
-      console.log(`\n${reply}\n`);
-    } catch (error) {
-      console.error("Erro:", error.message);
-    }
+client.on("message_create", async (msg) => {
+  // Só responde mensagens enviadas por você mesmo
+  if (!msg.fromMe) return;
 
-    prompt();
-  });
-}
+  // Ignora mensagens em grupos
+  if (msg.from.endsWith("@g.us")) return;
 
-prompt();
+  // Ignora mensagem vazia
+  if (!msg.body || !msg.body.trim()) return;
+
+  console.log(`[${new Date().toLocaleTimeString("pt-BR")}] Você: ${msg.body}`);
+
+  try {
+    const reply = await handleMessage(msg.body);
+    await msg.reply(reply);
+  } catch (error) {
+    console.error("Erro ao processar mensagem:", error.message);
+    await msg.reply("Tive um problema aqui. Tenta de novo?");
+  }
+});
+
+client.on("disconnected", (reason) => {
+  console.log("Bot desconectado:", reason);
+});
+
+console.log("Iniciando bot do WhatsApp...");
+console.log("Aguarde o QR Code aparecer para escanear.\n");
+
+client.initialize();

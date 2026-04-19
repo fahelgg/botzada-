@@ -1,0 +1,9 @@
+{
+  "monthlyIncome": 1500,
+  "fixedExpenses": 0,
+  "investmentRate": 0.2,
+  "priorities": ["estrutura", "investimento"],
+  "mainGoal": "indefinido",
+  "phase": "construção",
+  "impulseLevel": 5
+}
